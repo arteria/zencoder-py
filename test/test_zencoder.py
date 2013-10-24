@@ -1,6 +1,7 @@
 import unittest
 import os
 from zencoder import Zencoder
+import zencoder
 
 class TestZencoder(unittest.TestCase):
     def setUp(self):
@@ -34,17 +35,46 @@ class TestZencoder(unittest.TestCase):
         zc = Zencoder(api_version='edge')
         self.assertEquals(zc.base_url, 'https://app.zencoder.com/api/')
 
-    def test_zero_content_length(self):
+    def test_set_base_url(self):
         os.environ['ZENCODER_API_KEY'] = 'abcd123'
-        zc = Zencoder()
-        content = None
-        self.assertEquals(zc.job.content_length(content), "0")
+        zc = Zencoder(base_url='https://localhost:800/foo/')
+        self.assertEquals(zc.base_url, 'https://localhost:800/foo/')
 
-    def test_zero_content_length(self):
+    def test_set_base_url_and_version_fails(self):
         os.environ['ZENCODER_API_KEY'] = 'abcd123'
-        zc = Zencoder()
-        content = "foobar"
-        self.assertEquals(zc.job.content_length(content), "6")
+
+        self.assertRaises(zencoder.core.ZencoderError,
+                          Zencoder,
+                          base_url='https://localhost:800/foo/',
+                          api_version='v3')
+
+    def test_set_timeout(self):
+        api_key = 'testapikey'
+        zc = Zencoder(api_key=api_key, timeout=999)
+
+        self.assertEquals(zc.job.requests_params['timeout'], 999)
+
+    def test_set_proxies(self):
+        api_key = 'testapikey'
+        proxies = {
+            'https': 'https://10.10.1.10:1080'
+        }
+        zc = Zencoder(api_key=api_key, proxies=proxies)
+
+        self.assertEquals(zc.job.requests_params['proxies'], proxies)
+
+    def test_set_verify_false(self):
+        api_key = 'testapikey'
+        zc = Zencoder(api_key=api_key, verify=False)
+
+        self.assertEquals(zc.job.requests_params['verify'], False)
+
+    def test_set_cert_path(self):
+        api_key = 'testapikey'
+        cert = '/path/to/cert.pem'
+        zc = Zencoder(api_key=api_key, cert=cert)
+
+        self.assertEquals(zc.job.requests_params['cert'], cert)
 
 if __name__ == "__main__":
     unittest.main()
